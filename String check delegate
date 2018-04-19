@@ -1,0 +1,160 @@
+//check for the string 
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace WpfAppTest
+{
+    /// <summary>
+    /// Logica di interazione per MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public delegate void thread_generatorNum(int number,int index);
+
+        //public delegate void EMsgHandler(TextBox txt);
+
+        RowDefinition[] r_Array = new RowDefinition[16];
+        ColumnDefinition[] c_Array = new ColumnDefinition[16];
+        TextBox[] tb = new TextBox[256];
+        
+        public Int32[] num = new Int32[16];
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            Thread t = new Thread(th);
+
+
+            //allocating them 
+            for(int i = 0; i < 4; i++)
+            {
+                
+                    r_Array[i] = new RowDefinition();
+                    c_Array[i] = new ColumnDefinition();
+                    r_Array[i].Height = new GridLength(80);
+                    c_Array[i].Width = new GridLength(80);
+                    myGrid.RowDefinitions.Add(r_Array[i]);
+                    myGrid.ColumnDefinitions.Add(c_Array[i]);
+
+                
+            }
+            //inserting them set the rows and set the columns in a propriate way
+            int k = 0;
+
+            for(int j = 0; j < 4; j++)
+            {
+                for(int i = 0; i < 4; i++)
+                {
+                    //create a textBox
+                    tb[k] = new TextBox();
+                    tb[k].LostFocus += LostFocusHandler;
+                    tb[k].Tag = k;
+
+                    //if something change check for the String 
+                    check(tb[k],k);
+                    //tb[k].Dispatcher.Invoke(new EMsgHandler(this.check), new Object[] { tb[k] });
+                    
+                    Grid.SetColumn(tb[k], i);
+                    Grid.SetRow(tb[k],j);
+                    //Add them in to my grid
+                    myGrid.Children.Add(tb[k]);
+                   
+
+                    k++;
+                }
+               // k++;
+            }
+            t.Start();
+
+        }
+
+        private void check(TextBox txt1,int index)
+        {
+            String str = txt1.Text;
+            for(int i =2; i < str.Length; i++)
+            {
+                if(str)
+            }
+            //check the String "0x----" its convertable change it to the prev one otherwise keep it
+            
+           
+                //show the prev one!
+
+        }
+
+        private void LostFocusHandler(object sender, RoutedEventArgs e)
+        {
+         
+            TextBox txt = (TextBox)sender;
+         
+           
+            MessageBox.Show("change at the position "+(int)txt.Tag);
+
+            
+        }
+
+        private void th()
+        {
+            Random rnd = new Random();
+            int k = 0;
+            for(int i = 0; i < 4; i++)
+            {
+                
+                int number = rnd.Next(1000,9999);
+                //Convert.ToInt16(number);
+               Thread.Sleep(500);
+                //delegate: should handling my thread. thread : invoke 
+                tb[k].Dispatcher.Invoke(new thread_generatorNum(this.generateFunction)
+                    ,new Object[] {number,i});
+               
+                k++;
+              
+            }
+        }
+
+       
+       
+        private void generateFunction(int number,int index)
+        {
+            //deve stampare i valori
+            tb[index].Text = String.Format("0x{0:X2}",number);
+            
+        }
+
+
+
+
+
+      /*  public class EMsg
+        {
+            public int what { get; set; }
+            public int value { get; set; }
+
+            public EMsg(int what, int value)
+            {
+                this.what = what;
+                this.value = value;
+            }
+
+        }
+        */
+
+
+
+    }
+}
