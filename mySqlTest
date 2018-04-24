@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using MySql.Data;
+using MySql.Data.MySqlClient;
+
+namespace mySqlTest1
+{
+    /// <summary>
+    /// Logica di interazione per MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        RowDefinition[] r_Array = new RowDefinition[16];
+        ColumnDefinition[] c_Array = new ColumnDefinition[16];
+        TextBox[] tb = new TextBox[256];
+        static MySqlConnection conn = new MySqlConnection();
+
+        public delegate void thread_generatorNum(int number, int index);
+
+        public class TextBoxContent
+        {
+            public string _txtContents { get; set; }
+            public int _index { get; set; }
+            public TextBoxContent(String txt3, int index)
+            {
+                this._txtContents = txt3;
+                this._index = index;
+            }
+
+        }
+        public MainWindow()
+        {
+            InitializeComponent();
+            Thread t = new Thread(th);
+            for (int i = 0; i < 4; i++)
+            {
+
+                r_Array[i] = new RowDefinition();
+                c_Array[i] = new ColumnDefinition();
+                r_Array[i].Height = new GridLength(80);
+                c_Array[i].Width = new GridLength(80);
+                myGrid.RowDefinitions.Add(r_Array[i]);
+                myGrid.ColumnDefinitions.Add(c_Array[i]);
+            }
+            int k = 0;
+            for (int j = 0; j < 4; j++)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    //create a textBox
+                    tb[k] = new TextBox();
+
+                    TextBoxContent tbc = new TextBoxContent("", k);
+                    tb[k].LostFocus += LostFocusHandler;
+                    tb[k].Tag = tbc;
+                    Grid.SetColumn(tb[k], i);
+                    Grid.SetRow(tb[k], j);
+                    //Add them in to my grid
+                    myGrid.Children.Add(tb[k]);
+                    k++;
+                }
+
+
+            }
+            t.Start();
+           
+         
+
+           // String str = "CREATE DATABASE mydatabase";
+            // MySqlCommand cmd = new MySql.Data.MySqlClient.MySqlCommand();
+            
+            //string SQL;
+
+            conn.ConnectionString = "SERVER=192.168.1.9; USER=sheida;PASSWORD=benvenuto;DATABASE=eltra;SSLMODE=none";
+            
+            try
+            {
+
+                conn.Open();
+            
+
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            String query = "CREATE TABLE tb(eid int,Id int,value int);";
+            MySqlCommand cmd = new MySql.Data.MySqlClient.MySqlCommand(query, conn);
+            cmd.ExecuteNonQuery();
+            
+            //insert the data
+            //save to db
+            //
+            conn.Close();
+
+
+
+        }
+
+        public void th()
+        {
+            Random rnd = new Random();
+            int k = 0;
+            for (int i = 0; i < 4; i++)
+            {
+
+                int number = rnd.Next(1000, 9999);
+                //Convert.ToInt16(number);
+                Thread.Sleep(500);
+                tb[k].Dispatcher.Invoke(new thread_generatorNum(this.generateFunction)
+                    , new Object[] { number, i });
+
+                k++;
+
+            }
+        }
+
+        private void generateFunction(int number, int index)
+        {
+            tb[index].Text = String.Format("0x{0:X4}", number);
+
+            TextBoxContent tbc = (TextBoxContent)tb[index].Tag;
+            tbc._txtContents = tb[index].Text;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            //String line;
+            using (TextWriter sw = new StreamWriter(@"c:\folder\test.txt"))
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    //convert i to hexadecimal
+                    Int16 buff = Convert.ToInt16(i);
+                    sw.WriteLine("00{0:X2}", buff + "," + tb[i].Text);
+
+                    String query = "INSERT INTO tb (id, value) VALUES (" + buff + ", " + Convert.ToInt16(tb[i].Text, 16) + ");";
+
+
+                }
+                sw.WriteLine("");
+
+                //sw.append();
+                sw.Close();
+                MessageBox.Show("Data exported to a file!");
+            }
+            
+        }
+
+
+    
+
+
+        private void LostFocusHandler(object sender, RoutedEventArgs e)
+        {
+            TextBoxContent tbc;
+            TextBox txt = (TextBox)sender;
+            tbc = (TextBoxContent)txt.Tag;
+            if (Convert_to_int(txt.Text))
+            {
+                tbc._txtContents = txt.Text;
+                //MessageBox.Show("change at the position " + tbc._index);
+            }
+            else
+            {
+                txt.Text = tbc._txtContents;
+            }
+
+        }
+
+
+        private bool Convert_to_int(string text)
+        {
+            try
+            {
+                Int16 buff = Convert.ToInt16(text, 16);
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+
+                MessageBox.Show(ex.Message);
+                //back to the primitive state
+                return false;
+            }
+        }
+    }
+}
