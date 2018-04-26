@@ -1,0 +1,143 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using MySql.Data.MySqlClient;
+
+namespace mySqlTest2
+{
+    /// <summary>
+    /// Logica di interazione per MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        RowDefinition[] r_Array = new RowDefinition[16];
+        ColumnDefinition[] c_Array = new ColumnDefinition[16];
+        TextBox[] txtBox = new TextBox[256];
+        public delegate void thread_generator(int number, int indexI);
+        static MySqlConnection conn = new MySqlConnection();
+        static MySqlCommand command;
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            Thread t = new Thread(th);
+            for (int i = 0; i < 4; i++)
+            {
+                r_Array[i] = new RowDefinition();
+                c_Array[i] = new ColumnDefinition();
+                r_Array[i].Height = new GridLength(60);
+                c_Array[i].Width = new GridLength(60);
+                //Add this r_Array and c_Array to my Grid
+                myGrid.RowDefinitions.Add(r_Array[i]);
+                myGrid.ColumnDefinitions.Add(c_Array[i]);
+
+            }
+            int k = 0;
+
+            for(int j = 0; j < 4; j++)
+            {
+                for(int i = 0;i< 4; i++)
+                {
+                    txtBox[k] = new TextBox();
+                    Grid.SetColumn(txtBox[k], j);
+                    Grid.SetRow(txtBox[k], i);
+                    myGrid.Children.Add(txtBox[k]);
+                    k++;
+
+                }
+            }
+            t.Start();
+            //1.defenition of connection
+
+            conn.ConnectionString = "SERVER=192.168.1.9; USER=sheida;PASSWORD=benvenuto;DATABASE=eltra;SSLMODE=none";
+
+            //2.check there is connection or not 
+            try
+            {
+                conn.Open();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            //3.Make a data Table to insert your data
+            try
+            {
+                String query = "CREATE TABLE tb(eid int, id int,value int);";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                //4.if it exists before
+                cmd.ExecuteNonQuery();
+                //  conn.Close();*/
+            }catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+
+        }
+
+        public void th()
+        {
+            //generate random Numbers in to the textBoxes in myGrid
+            Random rnd = new Random();
+            int k = 0;
+            Thread.Sleep(500);
+            for(int i = 0; i < 16; i++)
+            {
+                
+                    int num = rnd.Next(1000, 9999);
+                    //for calling back my thread I need dispatcher
+                    txtBox[k].Dispatcher.Invoke(new thread_generator(this.generateFunction), new Object[] { num,i });
+                
+                k++;
+            }
+
+        }
+        private void generateFunction(int num,int indexI)
+        {
+           
+                 txtBox[indexI].Text = String.Format("0x{0:X4}", num);
+
+          //  indexJ++;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            //save the data in to the file
+            using (TextWriter sw = new StreamWriter(@"c:\folder\test.txt"))
+            {
+
+                for(int i = 0; i < 16; i++)
+                {
+                    
+                    //convert to the Int16
+                    Int16 buff = Convert.ToInt16(i);
+                    sw.WriteLine("00{0:X4}",buff+","+txtBox[i].Text);
+                    //insert my data in to the data table that has already created !!!
+                    String query2="INSERT INTO tb (id,value) VALUES ("+buff+","+txtBox[i].Text+");";
+                    command = new MySqlCommand(query2, conn);
+                    command.ExecuteNonQuery();
+                    //conn.Close();
+                }
+                sw.Close();
+                MessageBox.Show("Data Exported to the file Completed !");
+            }
+
+        }
+    }
+
+  
+}
