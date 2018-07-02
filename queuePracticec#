@@ -1,0 +1,60 @@
+/*generate random numbers put them in a queue and then dequeue them 
+ * 
+ * */
+
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Collections;
+
+namespace waitHanlder
+{
+    class Program
+    {
+
+        // Random rnd = new Random();
+        // ConcurrentQueue q = new ConcurrentQueue<int>();
+
+        static void Main()
+        {
+            Random rnd = new Random();
+            Queue myQ = new Queue ();
+            int num;
+
+            myQ.Enqueue("Hello ");
+            myQ.Enqueue("Sheida ");
+            myQ.Enqueue(" ! ");
+
+            for (int i = 0; i < 5; i++)
+            {
+                num = rnd.Next(1, 5);
+                myQ.Enqueue(num);
+            }
+
+            Console.WriteLine("myQ");
+            Console.WriteLine("{0}",myQ.Count);
+            Console.Write("values:");
+            printValues(myQ);
+
+
+            //dequeue
+            Console.Write("Dequeue : {0}", myQ.Dequeue());
+            Console.WriteLine("Queue Values are :");
+            printValues(myQ);
+
+
+        }
+       public static void printValues(IEnumerable myQueue)
+        {
+
+            foreach(object obj in myQueue)
+
+            Console.WriteLine("{0}",obj);
+
+           
+        }
+    }
+}
+  
